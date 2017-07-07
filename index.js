@@ -8,6 +8,7 @@
  *   None
  *
  * Configuration:
+ *   HUBOT_GITHUB_SLACK_PR_THREADS_SECRET - secret configured at GitHub
  *   HUBOT_GITHUB_SLACK_PR_THREADS_DEBUG - log webhook data to console (default: false)
  *
  * Commands:
@@ -15,45 +16,90 @@
  *
  * Author:
  *   Marek Ventur <marekventur@gmail.com>
+ *   Conrad Peyer <conrad.peyer@srf.ch>
  *
  **/
 
 const url = require("url");
 const querystring = require("querystring");
+const crypto = require('crypto')
+
 
 module.exports = function (robot) {
+
     robot.router.post("/hubot/gh-pull-requests", function (req, res) {
+
         let query = querystring.parse(url.parse(req.url).query)
-        let room = query.room || "botvy-test";
+        let room = query.room;
 
         try {
+
+            let hubSignature = req.headers["x-hub-signature"]; //X-Hub-Signature
             let payload = req.body;
             let message = handlePullRequest(payload);
 
-            if (message) {
-                let brainKey = getBrainKey(payload);
-
-                let parentTs = robot.brain.get(brainKey);
-                if (robot.brain.get(brainKey)) {
-                    message.thread_ts = parentTs;
-                }
+            if (hubSignature === undefined) {
+                let errMsg = 'ERROR: GitHub Secret not set. Rejecting request!';
+                console.error(errMsg)
+                res.status(401).end(errMsg);
+            } else if (!validate(hubSignature, payload)) {
+                let errMsg = 'ERROR: GitHub Secret invalid. Rejecting request!';
+                console.error(errMsg)
+                res.status(401).end(errMsg);
+            } else if (room === undefined) {
+                let errMsg = 'ERROR: No room was defined. Please pass the parameter "room"!';
+                console.error(errMsg)
+                res.status(400).end(errMsg);
+            } else {
 
                 if (message) {
-                    robot.messageRoom(room, message)[0].then(data => {
-                        if (!parentTs) {
-                            robot.brain.set(brainKey, data.ts);
-                        }
-                    });
-                }
-            }
-        } catch (error) {
-            robot.messageRoom("botvy-test", "Whoa, I got an error: " + error)
-            console.log("github pull request notifier error: " + error + ". Request: " + req.body)
-        }
+                    let brainKey = getBrainKey(payload);
 
-        res.end("");
+                    let parentTs = robot.brain.get(brainKey);
+                    if (robot.brain.get(brainKey)) {
+                        message.thread_ts = parentTs;
+                    }
+
+                    if (message) {
+
+                        if (robot.messageRoom(room, message)[0] !== undefined) {
+                            robot.messageRoom(room, message)[0].then(data => {
+                                if (!parentTs) {
+                                    robot.brain.set(brainKey, data.ts);
+                                }
+                            });
+                        } else {
+                            console.error('ERROR: There is problem with the messageRoom. Was the Slack integration successful?')
+                        }
+
+                    }
+                }
+
+                res.end("");
+            }
+
+        } catch (error) {
+            console.log("github pull request notifier error: " + error + ". Request: " + req.body)
+            res.end("");
+        }
     });
 };
+
+function validate(signature, body) {
+    /*
+        https://developer.github.com/v3/repos/hooks/#create-a-hook:
+        The value of this header is computed as the HMAC hex digest of the body, using the secret as the key.
+     */
+
+    let appSecret = process.env.HUBOT_GITHUB_SLACK_PR_THREADS_SECRET;
+    if (appSecret === undefined) {
+        console.error("ERROR: Secret not set! Please specify HUBOT_GITHUB_SLACK_PR_THREADS_SECRET.");
+        return false
+    } else {
+        let hmac = "sha1=" + crypto.createHmac('sha1', appSecret).update(JSON.stringify(body)).digest('hex')
+        return signature === hmac
+    }
+}
 
 function getBrainKey(data) {
     if (data.pull_request) {
