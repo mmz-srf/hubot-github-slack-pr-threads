@@ -188,7 +188,7 @@ function handlePullRequest(data) {
     }
 
     // Status
-    if (data.action === undefined && data.description && data.state === "pending" && data.target_url === "") {
+    if (data.action === undefined && data.description && data.target_url === "") {
         return {
             attachments: [
                 {
@@ -205,7 +205,7 @@ function handlePullRequest(data) {
     }
 
     //Status with target_url
-    if (data.action === undefined && data.description && data.state === "pending" && data.target_url !== undefined) {
+    if (data.action === undefined && data.description && data.target_url !== undefined) {
         return {
             attachments: [
                 {
