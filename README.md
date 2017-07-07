@@ -21,7 +21,12 @@ For example, if your hubot lives at myhubot.herokuapp.com, then you will set the
 
 <strong>Make sure to use "application/json" as type.</strong>
 
-**SECURITY WARNING**: This script does not currently validate the Github Secret. PRs are welcome!
+## Configuration
+
+`HUBOT_GITHUB_SLACK_PR_THREADS_SECRET` - secret configured at GitHub
+
+`HUBOT_GITHUB_SLACK_PR_THREADS_DEBUG` - log webhook data to console (default: false)
+
 
 ## Local Testing
 
