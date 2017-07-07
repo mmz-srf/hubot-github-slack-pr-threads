@@ -54,6 +54,7 @@ module.exports = function (robot) {
 
                 if (message) {
                     let brainKey = getBrainKey(payload);
+                    //console.log('brainKey', brainKey)
 
                     let parentTs = robot.brain.get(brainKey);
                     if (robot.brain.get(brainKey)) {
@@ -62,8 +63,9 @@ module.exports = function (robot) {
 
                     if (message) {
 
-                        if (robot.messageRoom(room, message)[0] !== undefined) {
-                            robot.messageRoom(room, message)[0].then(data => {
+                        let sentMsg = robot.messageRoom(room, message)[0];
+                        if (sentMsg !== undefined) {
+                            sentMsg.then(data => {
                                 if (!parentTs) {
                                     robot.brain.set(brainKey, data.ts);
                                 }
@@ -109,9 +111,16 @@ function getBrainKey(data) {
     if (data.issue) {
         return "github-" + data.issue.html_url;
     }
+
+    if (data.sha) {
+        return "github-" + data.sha;
+    }
 }
 
 function handlePullRequest(data) {
+
+    //TODO: check for the header X-GitHub-Event as well
+
     // Open
     if (data.action === "opened" && data.pull_request) {
         let number = data.pull_request.number;
@@ -125,7 +134,7 @@ function handlePullRequest(data) {
                     "title": `PR #${number}: ${title}`,
                     "title_link": url,
                     "author_name": data.pull_request.user.login,
-                    "author_link": data.pull_request.user.url,
+                    "author_link": data.pull_request.user.html_url,
                     "author_icon": data.pull_request.user.avatar_url,
                     "text": data.pull_request.body,
                     "color": "#7CD197"
@@ -145,7 +154,7 @@ function handlePullRequest(data) {
                     "fallback": `PR #${number}: ${data.comment.user.login}: ${data.comment.body}`,
                     "title_link": url,
                     "author_name": data.comment.user.login,
-                    "author_link": data.comment.user.url,
+                    "author_link": data.comment.user.html_url,
                     "author_icon": data.comment.user.avatar_url,
                     "text": data.comment.body
                 }
@@ -163,14 +172,14 @@ function handlePullRequest(data) {
             action = "merged";
         }
 
-         return {
+        return {
             attachments: [
                 {
                     "fallback": `PR #${number}: ${action}`,
                     "title": `${action.toUpperCase()}`,
                     "title_link": url,
                     "author_name": data.sender.login,
-                    "author_link": data.sender.url,
+                    "author_link": data.sender.html_url,
                     "author_icon": data.sender.avatar_url,
                     "color": "#d011dd"
                 }
@@ -178,7 +187,57 @@ function handlePullRequest(data) {
         };
     }
 
-    if (process.env.HUBOT_GITHUB_SLACK_PR_THREADS_DEBUG) {
-      console.log(`POST hubot/gh-pull-requests: /${data}`);
+    // Status
+    if (data.action === undefined && data.description && data.state === "pending" && data.target_url === "") {
+        return {
+            attachments: [
+                {
+                    "fallback": `${data.description} ${data.commit.html_url} (${data.state})`,
+                    "title": data.description,
+                    "author_name": data.commit.commit.author.name,
+                    "author_link": data.commit.committer.html_url,
+                    "author_icon": data.commit.committer.avatar_url,
+                    "text": `${data.commit.html_url} (${data.state})`,
+                    "color": stateToColor(data.state)
+                }
+            ]
+        };
     }
+
+    //Status with target_url
+    if (data.action === undefined && data.description && data.state === "pending" && data.target_url !== undefined) {
+        return {
+            attachments: [
+                {
+                    "fallback": `${data.description} ${data.target_url}`,
+                    "title": data.description,
+                    "author_name": data.commit.commit.author.name,
+                    "author_link": data.commit.committer.html_url,
+                    "author_icon": data.commit.committer.avatar_url,
+                    "text": `${data.target_url} (${data.state})`,
+                    "color": stateToColor(data.state)
+                }
+            ]
+        };
+
+    }
+
+    if (process.env.HUBOT_GITHUB_SLACK_PR_THREADS_DEBUG) {
+        console.log('POST hubot/gh-pull-requests:', data);
+    }
+}
+
+function stateToColor(state) {
+    if (state === "pending") {
+        return "#ffffcc";
+    } else if (state === "error") {
+        return "#ff8080";
+    } else if (state === "success") {
+        return "#b3ffcc";
+    } else if (state === "failure") {
+        return "#ff9900";
+    } else {
+        return ""
+    }
+
 }
