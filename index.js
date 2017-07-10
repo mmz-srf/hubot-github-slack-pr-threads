@@ -112,6 +112,8 @@ function validate(signature, body) {
     } else {
         let hmac = "sha1=" + crypto.createHmac('sha1', appSecret).update(JSON.stringify(body)).digest('hex')
         return signature === hmac
+        // console.error("SECURITY DISABLED!!!");
+        // return true
     }
 }
 
@@ -166,7 +168,7 @@ function getGitHubPrBySha(sha, callback) {
 
 function handlePullRequest(eventType, data) {
 
-    if (["pull_request", "pull_request_review", "pull_request_review_comment"].indexOf(eventType) > -1) {
+    if (["pull_request"].indexOf(eventType) > -1) {
 
         if (["closed", "reopened"].indexOf(data.action) > -1) {
             let number = data.pull_request.number;
@@ -192,7 +194,6 @@ function handlePullRequest(eventType, data) {
             };
         } else {
 
-            let number = data.pull_request.number;
             let url = data.pull_request.html_url;
             let title = data.pull_request.title;
 
@@ -212,6 +213,43 @@ function handlePullRequest(eventType, data) {
             };
 
         }
+
+    } else if (["pull_request_review"].indexOf(eventType) > -1) {
+
+        let url = data.review.html_url;
+
+        return {
+            attachments: [
+                {
+                    "fallback": `Review (${data.action}): ${data.review.body}`,
+                    "title": `Review (${data.action})`,
+                    "title_link": url,
+                    "author_name": data.review.user.login,
+                    "author_link": data.review.user.html_url,
+                    "author_icon": data.review.user.avatar_url,
+                    "text": data.review.body,
+                    "color": "#d011dd"
+                }
+            ]
+        };
+
+    } else if (eventType === "issue_comment") {
+
+        let number = data.issue.number;
+        let url = data.comment.html_url;
+
+        return {
+            attachments: [
+                {
+                    "fallback": `PR #${number}: ${data.comment.user.login}: ${data.comment.body}`,
+                    "title_link": url,
+                    "author_name": data.comment.user.login,
+                    "author_link": data.comment.user.html_url,
+                    "author_icon": data.comment.user.avatar_url,
+                    "text": data.comment.body
+                }
+            ]
+        };
 
     } else if (eventType === "issue_comment") {
 
