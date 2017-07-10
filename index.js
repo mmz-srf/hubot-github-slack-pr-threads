@@ -125,7 +125,9 @@ function getBrainKey(data, callback) {
     }
 
     if (data.sha) {
-        getGitHubPrBySha(data.sha, callback);
+        getGitHubPrBySha(data.sha, function (shaOrPrUrl) {
+            callback("github-" + shaOrPrUrl)
+        });
     }
 }
 
