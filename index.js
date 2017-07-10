@@ -85,10 +85,10 @@ module.exports = function (robot) {
                             }
 
                         }
-
-                        res.end("");
                     });
                 }
+
+                res.end("");
 
             }
 
@@ -162,9 +162,9 @@ function getGitHubPrBySha(sha, callback) {
 
 }
 
-function handlePullRequest(key, data) {
+function handlePullRequest(eventType, data) {
 
-    if (["pull_request", "pull_request_review", "pull_request_review_comment"].indexOf(key) > -1) {
+    if (["pull_request", "pull_request_review", "pull_request_review_comment"].indexOf(eventType) > -1) {
 
         if (["closed", "reopened"].indexOf(data.action) > -1) {
             let number = data.pull_request.number;
@@ -211,7 +211,7 @@ function handlePullRequest(key, data) {
 
         }
 
-    } else if (key === "issue_comment") {
+    } else if (eventType === "issue_comment") {
 
         let number = data.issue.number;
         let url = data.comment.html_url;
@@ -229,7 +229,7 @@ function handlePullRequest(key, data) {
             ]
         };
 
-    } else if (key === "status") {
+    } else if (eventType === "status") {
 
         if (data.target_url === "") {
             return {
@@ -261,6 +261,8 @@ function handlePullRequest(key, data) {
             };
         }
 
+    } else {
+        console.warn("Don't understand event type [" + eventType + "]");
     }
 
     if (process.env.HUBOT_GITHUB_SLACK_PR_THREADS_DEBUG) {
@@ -280,5 +282,4 @@ function stateToColor(state) {
     } else {
         return ""
     }
-
 }
