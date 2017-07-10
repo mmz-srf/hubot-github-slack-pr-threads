@@ -194,6 +194,7 @@ function handlePullRequest(eventType, data) {
             };
         } else {
 
+            let number = data.pull_request.number;
             let url = data.pull_request.html_url;
             let title = data.pull_request.title;
 
@@ -214,7 +215,8 @@ function handlePullRequest(eventType, data) {
 
         }
 
-    } else if (["pull_request_review"].indexOf(eventType) > -1) {
+
+    }  else if (["pull_request_review"].indexOf(eventType) > -1) {
 
         let url = data.review.html_url;
 
@@ -228,6 +230,26 @@ function handlePullRequest(eventType, data) {
                     "author_link": data.review.user.html_url,
                     "author_icon": data.review.user.avatar_url,
                     "text": data.review.body,
+                    "color": "#d011dd"
+                }
+            ]
+        };
+
+    } else if (["pull_request_review_comment"].indexOf(eventType) > -1) {
+
+        let number = data.pull_request.number;
+        let url = data.comment.html_url;
+
+        return {
+            attachments: [
+                {
+                    "fallback": `Comment (${data.action}): ${data.comment.body}`,
+                    "title": `Comment (${data.action})`,
+                    "title_link": url,
+                    "author_name": data.comment.user.login,
+                    "author_link": data.comment.user.html_url,
+                    "author_icon": data.comment.user.avatar_url,
+                    "text": data.comment.body,
                     "color": "#d011dd"
                 }
             ]
