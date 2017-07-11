@@ -25,6 +25,10 @@ For example, if your hubot lives at myhubot.herokuapp.com, then you will set the
 
 `HUBOT_GITHUB_SLACK_PR_THREADS_SECRET` - secret configured at GitHub
 
+`HUBOT_GITHUB_SLACK_PR_THREADS_USER` - user with readonly access to the repos
+
+`HUBOT_GITHUB_SLACK_PR_THREADS_PW` - pw for the user with readonly access to the repos
+
 `HUBOT_GITHUB_SLACK_PR_THREADS_DEBUG` - log webhook data to console (default: false)
 
 
@@ -33,9 +37,11 @@ For example, if your hubot lives at myhubot.herokuapp.com, then you will set the
 You can use ```./scripts/github_webhook_simulator.js event_name``` to emit different events. ```pull_request```, ```pull_request_closed```, ```pull_request_merged```, ```pull_request_reopened``` and ```pull_request_review_comment``` are the most useful ones.
 
 
-## Author
+## Authors
 
 Marek Ventur [marekventur](http://github.com/marekventur)
+
+Conrad Peyer [peyerc](http://github.com/peyerc)
 
 ## License
 
