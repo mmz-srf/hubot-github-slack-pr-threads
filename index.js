@@ -112,8 +112,8 @@ function validate(signature, body) {
     } else {
         let hmac = "sha1=" + crypto.createHmac('sha1', appSecret).update(JSON.stringify(body)).digest('hex')
         return signature === hmac
-        // console.error("SECURITY DISABLED!!!");
-        // return true
+        //console.error("SECURITY DISABLED!!!");
+        //return true
     }
 }
 
@@ -168,6 +168,8 @@ function getGitHubPrBySha(sha, callback) {
 
 function handlePullRequest(eventType, data) {
 
+    let repoName = (data.repository) ? data.repository.name : undefined;
+
     if (["pull_request"].indexOf(eventType) > -1) {
 
         if (["closed", "reopened"].indexOf(data.action) > -1) {
@@ -188,7 +190,8 @@ function handlePullRequest(eventType, data) {
                         "author_name": data.sender.login,
                         "author_link": data.sender.html_url,
                         "author_icon": data.sender.avatar_url,
-                        "color": "#d011dd"
+                        "color": "#d011dd",
+                        "pretext": repoName
                     }
                 ]
             };
@@ -208,7 +211,8 @@ function handlePullRequest(eventType, data) {
                         "author_link": data.pull_request.user.html_url,
                         "author_icon": data.pull_request.user.avatar_url,
                         "text": data.pull_request.body,
-                        "color": "#7CD197"
+                        "color": "#7CD197",
+                        "pretext": repoName
                     }
                 ]
             };
@@ -230,7 +234,8 @@ function handlePullRequest(eventType, data) {
                     "author_link": data.review.user.html_url,
                     "author_icon": data.review.user.avatar_url,
                     "text": data.review.body,
-                    "color": "#d011dd"
+                    "color": "#d011dd",
+                    "pretext": repoName
                 }
             ]
         };
@@ -250,7 +255,8 @@ function handlePullRequest(eventType, data) {
                     "author_link": data.comment.user.html_url,
                     "author_icon": data.comment.user.avatar_url,
                     "text": data.comment.body,
-                    "color": "#d011dd"
+                    "color": "#d011dd",
+                    "pretext": repoName
                 }
             ]
         };
@@ -268,7 +274,8 @@ function handlePullRequest(eventType, data) {
                     "author_name": data.comment.user.login,
                     "author_link": data.comment.user.html_url,
                     "author_icon": data.comment.user.avatar_url,
-                    "text": data.comment.body
+                    "text": data.comment.body,
+                    "pretext": repoName
                 }
             ]
         };
@@ -286,7 +293,8 @@ function handlePullRequest(eventType, data) {
                     "author_name": data.comment.user.login,
                     "author_link": data.comment.user.html_url,
                     "author_icon": data.comment.user.avatar_url,
-                    "text": data.comment.body
+                    "text": data.comment.body,
+                    "pretext": repoName
                 }
             ]
         };
@@ -303,7 +311,8 @@ function handlePullRequest(eventType, data) {
                         "author_link": data.commit.committer.html_url,
                         "author_icon": data.commit.committer.avatar_url,
                         "text": `${data.commit.html_url} (${data.state})`,
-                        "color": stateToColor(data.state)
+                        "color": stateToColor(data.state),
+                        "pretext": repoName
                     }
                 ]
             };
@@ -317,7 +326,8 @@ function handlePullRequest(eventType, data) {
                         "author_link": data.commit.committer.html_url,
                         "author_icon": data.commit.committer.avatar_url,
                         "text": `${data.target_url} (${data.state})`,
-                        "color": stateToColor(data.state)
+                        "color": stateToColor(data.state),
+                        "pretext": repoName
                     }
                 ]
             };
